@@ -14,6 +14,7 @@ Template only. **Do not invent addresses.** Fill a row after that contract or wa
 | Dead address | any EVM | `0x000000000000000000000000000000000000dEaD` | Conventional sink. Same sink at kill / T+90d / earlier. Not a project-controlled wallet. |
 | initialHolder (launch batch executor) | — | _TBD — do not invent_ | Receives 100% at mint. Must be 0 after the batch. Throwaway deployer; do not fund it as a treasury. |
 | Proposer key | — | _TBD — do not invent_ | One documented proposer for treasury dust + pairing proposals. Listing uses the same constructor pattern (may be the same key). Immutable; not an admin role. |
+| Pairing beneficiary | — | _TBD — do not invent_ | Immutable published project wallet. After the 7-day delay, treasury pairing ETH/WETH may go here or to dead only. Not an arbitrary EOA chosen at propose-time. |
 | Dust recipient set | — | _TBD — optional log-demo address, or empty_ | Frozen at treasury construct. |
 | Listing allowlist | — | _TBD — may be empty_ | Frozen at listing construct. |
 | AMM recipient (80M) | — | _TBD — do not invent_ | Caller-supplied pool address created out of band. Not shipped by this repo. |

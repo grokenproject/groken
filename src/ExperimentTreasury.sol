@@ -13,9 +13,12 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
  *      (b) the documented dead address (same sink at experiment end / T+90d, or earlier).
  *      There is no third GRKN destination and no delayed GRKN-to-arbitrary-wallet path.
  *
- *      The 7-day delay applies to pairing assets (native ETH or WETH) only. Pairing leftovers
- *      have no dust exception. One immutable proposer key. This is not OpenZeppelin
- *      TimelockController: there is no DEFAULT_ADMIN_ROLE and no `updateDelay`.
+ *      The 7-day delay applies to pairing assets (native ETH or WETH) only. After the delay,
+ *      pairing ETH/WETH may leave only to the immutable pairing beneficiary (a published
+ *      project wallet set at deploy) or the documented dead address. No third pairing
+ *      destination. Pairing leftovers have no dust exception. One immutable proposer key.
+ *      This is not OpenZeppelin TimelockController: there is no DEFAULT_ADMIN_ROLE and no
+ *      `updateDelay`.
  */
 contract ExperimentTreasury {
     using SafeERC20 for IERC20;
@@ -30,6 +33,7 @@ contract ExperimentTreasury {
     address public immutable weth;
     address public immutable dead;
     address public immutable proposer;
+    address public immutable pairingBeneficiary;
     uint256 public immutable start;
 
     mapping(address => bool) public isDustRecipient;
@@ -64,6 +68,7 @@ contract ExperimentTreasury {
     error InsufficientPairing();
     error PairingTransferFailed();
     error ExperimentNotEnded();
+    error BadPairingDestination();
 
     event DustRecipientFrozen(address indexed recipient);
     event DustSent(address indexed to, uint256 amount, string reason);
@@ -82,10 +87,24 @@ contract ExperimentTreasury {
      * @param weth_ Pairing-asset ERC-20 (canonical WETH on the chosen chain).
      * @param dead_ Documented burn/sink address.
      * @param proposer_ Sole proposer key for dust and pairing proposals. Immutable.
+     * @param pairingBeneficiary_ Immutable pairing-asset recipient (published project wallet).
      * @param dustRecipients_ Frozen recipient set. Empty is valid (dust unused; only dead remains).
      */
-    constructor(address grkn_, address weth_, address dead_, address proposer_, address[] memory dustRecipients_) {
+    constructor(
+        address grkn_,
+        address weth_,
+        address dead_,
+        address proposer_,
+        address pairingBeneficiary_,
+        address[] memory dustRecipients_
+    ) {
         if (grkn_ == address(0) || weth_ == address(0) || dead_ == address(0) || proposer_ == address(0)) {
+            revert ZeroAddress();
+        }
+        if (
+            pairingBeneficiary_ == address(0) || pairingBeneficiary_ == address(this) || pairingBeneficiary_ == grkn_
+                || pairingBeneficiary_ == weth_
+        ) {
             revert ZeroAddress();
         }
 
@@ -93,6 +112,7 @@ contract ExperimentTreasury {
         weth = weth_;
         dead = dead_;
         proposer = proposer_;
+        pairingBeneficiary = pairingBeneficiary_;
         start = block.timestamp;
         weekStart = block.timestamp;
 
@@ -166,15 +186,14 @@ contract ExperimentTreasury {
 
     /**
      * @notice Propose a pairing-asset (ETH or WETH) withdrawal. 7-day delay. One pending. Proposer only.
-     * @dev Replaces nothing: reverts if a proposal is already pending (conservative; does not reset delay).
-     *      Destination is chosen by the proposer. Documented in AUDIT.md as an operator pairing capability,
-     *      not a GRKN destination.
+     * @dev `to` must be the immutable pairing beneficiary or dead. No third destination.
+     *      Reverts if a proposal is already pending (conservative; does not reset delay).
      */
     function proposePairingWithdraw(address token, address to, uint256 amount) external onlyProposer {
         if (pendingPairing.exists) revert PendingExists();
-        if (to == address(0)) revert ZeroAddress();
         if (amount == 0) revert ZeroAmount();
         if (token != address(0) && token != weth) revert BadPairingToken();
+        _assertPairingTo(to);
 
         uint256 eta = block.timestamp + PAIRING_DELAY;
         pendingPairing = PairingProposal({token: token, to: to, amount: amount, eta: eta, exists: true});
@@ -188,6 +207,7 @@ contract ExperimentTreasury {
         PairingProposal memory p = pendingPairing;
         if (!p.exists) revert NoPending();
         if (block.timestamp < p.eta) revert DelayNotMet(p.eta, block.timestamp);
+        _assertPairingTo(p.to);
 
         delete pendingPairing;
 
@@ -201,6 +221,10 @@ contract ExperimentTreasury {
         }
 
         emit PairingExecuted(p.token, p.to, p.amount);
+    }
+
+    function _assertPairingTo(address to) internal view {
+        if (to != pairingBeneficiary && to != dead) revert BadPairingDestination();
     }
 
     function _rollDustWeek() internal {

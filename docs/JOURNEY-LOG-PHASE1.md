@@ -34,6 +34,10 @@ Public log for the Phase 1 Foundry repository. Later phases should append, not r
 - Pairing `to` after 7 days remains a pairing-custody FLAG, not a GRKN path.
 - Analysis reports remain under `reports/` and are re-run after this change.
 
+## 2026-09-03 — pairing FLAG closed
+
+- `ExperimentTreasury` pairing ETH/WETH after the 7-day delay may only go to the immutable `pairingBeneficiary` (constructor, published project wallet) or dead. Random `to` reverts. Not a GRKN path. Delay unchanged. Not TimelockController.
+
 ## Not done in Phase 1 (intentionally)
 
 - Mainnet

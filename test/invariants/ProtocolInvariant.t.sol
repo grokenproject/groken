@@ -37,7 +37,7 @@ struct HandlerCfg {
     address ammRecipient;
     address teamWallet;
     address lpBeneficiary;
-    address pairingDest;
+    address pairingBeneficiary;
 }
 
 contract Handler is Test {
@@ -57,7 +57,7 @@ contract Handler is Test {
     address public ammRecipient;
     address public teamWallet;
     address public lpBeneficiary;
-    address public pairingDest;
+    address public pairingBeneficiary;
 
     uint256 public ghostTreasuryDust;
     uint256 public ghostTreasuryDead;
@@ -71,6 +71,7 @@ contract Handler is Test {
     uint256 public ghostListingOfflist;
     uint256 public ghostVestReleasedBeforeCliff;
     uint256 public ghostLockerEarlyMove;
+    uint256 public ghostPairingToThird;
 
     constructor(HandlerCfg memory c) {
         token = c.token;
@@ -88,7 +89,7 @@ contract Handler is Test {
         ammRecipient = c.ammRecipient;
         teamWallet = c.teamWallet;
         lpBeneficiary = c.lpBeneficiary;
-        pairingDest = c.pairingDest;
+        pairingBeneficiary = c.pairingBeneficiary;
         ghostTreasuryStartGrkn = token.balanceOf(address(treasury));
     }
 
@@ -119,30 +120,27 @@ contract Handler is Test {
 
     function treasuryProposePairing(uint8 which, uint256 amount) external {
         address tok = which % 2 == 0 ? address(0) : address(weth);
+        address to = which % 3 == 0 ? pairingBeneficiary : (which % 3 == 1 ? dead : address(0xBEEF));
         uint256 avail = tok == address(0) ? address(treasury).balance : weth.balanceOf(address(treasury));
         if (avail == 0) return;
         amount = bound(amount, 1, avail);
         vm.prank(proposer);
-        try treasury.proposePairingWithdraw(tok, pairingDest, amount) {
+        try treasury.proposePairingWithdraw(tok, to, amount) {
             ghostLastPairingPropose = block.timestamp;
         } catch {}
     }
 
     function treasuryExecutePairing() external {
-        uint256 ethBefore = pairingDest.balance;
-        uint256 wethBefore = weth.balanceOf(pairingDest);
         uint256 tEth = address(treasury).balance;
         uint256 tWeth = weth.balanceOf(address(treasury));
         try treasury.executePairingWithdraw() {
             if (block.timestamp < ghostLastPairingPropose + 7 days && ghostLastPairingPropose != 0) {
-                // Should be unreachable if the contract holds the delay.
                 revert("pairing left early");
             }
             ghostPairingEthLeft += tEth - address(treasury).balance;
             ghostPairingWethLeft += tWeth - weth.balanceOf(address(treasury));
-            // Destinations recorded only to keep compiler happy / future asserts.
-            ethBefore;
-            wethBefore;
+            (address pendingTo,,,,) = treasury.pendingPairing();
+            pendingTo;
         } catch {}
     }
 
@@ -227,7 +225,7 @@ contract ProtocolInvariantTest is Test {
     address internal listingFeeDest;
     address internal mmDest;
     address internal lpBeneficiary;
-    address internal pairingDest;
+    address internal pairingBeneficiary;
 
     uint256 internal constant LP_LOCKED = 1000 ether;
 
@@ -241,7 +239,7 @@ contract ProtocolInvariantTest is Test {
         listingFeeDest = makeAddr("listingFeeDest");
         mmDest = makeAddr("mmDest");
         lpBeneficiary = makeAddr("lpBeneficiary");
-        pairingDest = makeAddr("pairingDest");
+        pairingBeneficiary = makeAddr("pairingBeneficiary");
 
         weth = new MockWETH();
         lpToken = new MockERC20("Mock LP", "mLP");
@@ -253,7 +251,8 @@ contract ProtocolInvariantTest is Test {
 
         address[] memory dustRecipients = new address[](1);
         dustRecipients[0] = dustDemo;
-        treasury = new ExperimentTreasury(address(token), address(weth), dead, proposer, dustRecipients);
+        treasury =
+            new ExperimentTreasury(address(token), address(weth), dead, proposer, pairingBeneficiary, dustRecipients);
 
         lpToken.mint(launch, LP_LOCKED);
         address predicted = vm.computeCreateAddress(launch, vm.getNonce(launch) + 1);
@@ -303,7 +302,7 @@ contract ProtocolInvariantTest is Test {
                 ammRecipient: ammRecipient,
                 teamWallet: teamWallet,
                 lpBeneficiary: lpBeneficiary,
-                pairingDest: pairingDest
+                pairingBeneficiary: pairingBeneficiary
             })
         );
 
@@ -352,9 +351,13 @@ contract ProtocolInvariantTest is Test {
 
     function invariant_pairingCannotLeaveEarly() public view {
         // Handler reverts internally if execute succeeds before delay.
-        // Also: if we have never successfully executed, pairing dest has 0 from treasury path
-        // except after a valid delay. The ghost increments only on success after delay check.
         assertTrue(true);
+    }
+
+    function invariant_pairingOnlyBeneficiaryOrDead() public view {
+        assertEq(address(0xBEEF).balance, 0);
+        assertEq(weth.balanceOf(address(0xBEEF)), 0);
+        assertEq(handler.ghostPairingToThird(), 0);
     }
 
     function invariant_vestCannotReleaseBeforeCliff() public view {

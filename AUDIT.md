@@ -27,7 +27,7 @@ These are binding interpretations where the Phase 1 brief left a gap. They were 
 
 3. **Empty dust set.** `ExperimentTreasury` accepts an empty frozen recipient list. Dust then cannot be sent; only the dead sink remains. Tests use one log-demo recipient.
 
-4. **Pairing destination.** Pairing-asset proposals (ETH or WETH) take a proposer-chosen `to` after the 7-day delay. This is **not** a GRKN destination and is not a third GRKN path. Documented as an operator pairing-capability. There is no pairing dust exception and no pairing leftover exception. A pending pairing proposal cannot be replaced (no delay reset). Conservative: stuck-pending is preferred to a cancel/replace admin.
+4. **Pairing destination (FLAG closed).** After the 7-day delay, pairing ETH/WETH may leave only to (a) `pairingBeneficiary`, an immutable published project wallet set at deploy, or (b) the documented dead address. A random `to` reverts (`BadPairingDestination`). This is **not** a GRKN path and does not add a GRKN third destination. Delay is still 7 days. Not OZ TimelockController. A pending pairing proposal cannot be replaced (no delay reset).
 
 5. **Pairing leftover after T+90d.** Pairing assets still require the 7-day delay. Experiment end does not create a pairing dust path or an instant pairing drain.
 
@@ -47,7 +47,7 @@ These are binding interpretations where the Phase 1 brief left a gap. They were 
 
 13. **Extra tokens sent later.** `TeamVestLock` vests `balance + released` on the same schedule. Extra GRKN sent after deploy also vest. Conservative: no admin clawback.
 
-14. **Dead-sends: proposer-only until T+90, then permissionless remainder.** Before `start+90d`, `sendGrknToDead` / `sendToDead` revert for a non-proposer (no day-0 grief of the 5M bags). After T+90d those same functions are permissionless remainder-to-dead. `sendRemainingGrknToDead` / `sendRemainderToDead` remain permissionless only after experiment end (listing remainder still deletes any dying pending and includes that amount). Pairing withdraw to an arbitrary `to` after 7 days is a pairing-custody path, not a GRKN third destination.
+14. **Dead-sends: proposer-only until T+90, then permissionless remainder.** Before `start+90d`, `sendGrknToDead` / `sendToDead` revert for a non-proposer (no day-0 grief of the 5M bags). After T+90d those same functions are permissionless remainder-to-dead. `sendRemainingGrknToDead` / `sendRemainderToDead` remain permissionless only after experiment end (listing remainder still deletes any dying pending and includes that amount). Pairing FLAG is closed in code: pairing `to` is beneficiary or dead only.
 
 15. **No kill function.** Experiment end is `start + 90 days`. There is no `kill()` on any of the five contracts. Calling a missing `kill()` does not unlock the locker or the vest.
 
@@ -130,7 +130,7 @@ These three tools are **not** in GitHub Actions. CI is Foundry-only. Reasons: Sl
 
 ### Slither / Aderyn review (not “audited”)
 
-- `arbitrary-send-eth` / `low-level-calls` / `reentrancy-events` on `executePairingWithdraw`: pairing ETH to the proposed `to` after the 7-day delay. `pendingPairing` is deleted before the call. Intentional.
+- `arbitrary-send-eth` / `low-level-calls` / `reentrancy-events` on `executePairingWithdraw`: pairing ETH after the 7-day delay to `pairingBeneficiary` or dead only. `pendingPairing` is deleted before the call. FLAG closed in code.
 - `timestamp`: 90-day experiment end, 7-day delays, locker unlock, vest cliff. Intentional.
 - `incorrect-equality` on `amount == 0`: empty-balance guards. Intentional.
 - Aderyn H-1 (state change after `balanceOf`) was a CEI order issue on `sendRemainderToDead`. Fixed by deleting `pending` first, then reading the balance (pending tokens remain in the contract), then transferring. Behavior unchanged: remainder including any pending amount goes to dead; pending is cleared.

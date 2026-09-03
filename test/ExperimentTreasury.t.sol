@@ -106,7 +106,7 @@ contract ExperimentTreasuryTest is Fixture {
 
     function test_pairingCannotLeaveBeforeDelay_ETH() public {
         vm.prank(proposer);
-        treasury.proposePairingWithdraw(address(0), stranger, 1 ether);
+        treasury.proposePairingWithdraw(address(0), pairingBeneficiary, 1 ether);
 
         vm.expectRevert();
         treasury.executePairingWithdraw();
@@ -118,15 +118,15 @@ contract ExperimentTreasuryTest is Fixture {
         assertEq(address(treasury).balance, 10 ether);
 
         vm.warp(block.timestamp + 1);
-        uint256 before_ = stranger.balance;
+        uint256 before_ = pairingBeneficiary.balance;
         treasury.executePairingWithdraw();
-        assertEq(stranger.balance, before_ + 1 ether);
+        assertEq(pairingBeneficiary.balance, before_ + 1 ether);
         assertEq(address(treasury).balance, 9 ether);
     }
 
     function test_pairingCannotLeaveBeforeDelay_WETH() public {
         vm.prank(proposer);
-        treasury.proposePairingWithdraw(address(weth), stranger, 1 ether);
+        treasury.proposePairingWithdraw(address(weth), pairingBeneficiary, 1 ether);
 
         vm.expectRevert();
         treasury.executePairingWithdraw();
@@ -134,28 +134,56 @@ contract ExperimentTreasuryTest is Fixture {
 
         vm.warp(block.timestamp + 7 days);
         treasury.executePairingWithdraw();
-        assertEq(weth.balanceOf(stranger), 1 ether);
+        assertEq(weth.balanceOf(pairingBeneficiary), 1 ether);
+    }
+
+    function test_pairingRejectsRandomAddress() public {
+        vm.startPrank(proposer);
+        vm.expectRevert(ExperimentTreasury.BadPairingDestination.selector);
+        treasury.proposePairingWithdraw(address(0), stranger, 1 ether);
+        vm.expectRevert(ExperimentTreasury.BadPairingDestination.selector);
+        treasury.proposePairingWithdraw(address(weth), stranger, 1 ether);
+        vm.expectRevert(ExperimentTreasury.BadPairingDestination.selector);
+        treasury.proposePairingWithdraw(address(0), proposer, 1 ether);
+        vm.stopPrank();
+        assertEq(stranger.balance, 0);
+        assertEq(weth.balanceOf(stranger), 0);
+    }
+
+    function test_pairingOnlyBeneficiaryOrDead() public {
+        vm.prank(proposer);
+        treasury.proposePairingWithdraw(address(0), pairingBeneficiary, 1 ether);
+        vm.warp(treasury.start() + 7 days);
+        treasury.executePairingWithdraw();
+        assertEq(pairingBeneficiary.balance, 1 ether);
+
+        vm.prank(proposer);
+        treasury.proposePairingWithdraw(address(weth), dead, 1 ether);
+        vm.warp(treasury.start() + 14 days);
+        treasury.executePairingWithdraw();
+        assertEq(weth.balanceOf(dead), 1 ether);
+        assertEq(weth.balanceOf(stranger), 0);
     }
 
     function test_pairingRejectsNonWethErc20() public {
         vm.prank(proposer);
         vm.expectRevert(ExperimentTreasury.BadPairingToken.selector);
-        treasury.proposePairingWithdraw(address(token), stranger, 1 ether);
+        treasury.proposePairingWithdraw(address(token), pairingBeneficiary, 1 ether);
     }
 
     function test_pairingNoDustException() public {
         // Pairing has no 100-unit dust shortcut. Even 1 wei needs the delay.
         vm.prank(proposer);
-        treasury.proposePairingWithdraw(address(0), stranger, 1);
+        treasury.proposePairingWithdraw(address(0), pairingBeneficiary, 1);
         vm.expectRevert();
         treasury.executePairingWithdraw();
     }
 
     function test_onePendingPairing() public {
         vm.startPrank(proposer);
-        treasury.proposePairingWithdraw(address(0), stranger, 1 ether);
+        treasury.proposePairingWithdraw(address(0), pairingBeneficiary, 1 ether);
         vm.expectRevert(ExperimentTreasury.PendingExists.selector);
-        treasury.proposePairingWithdraw(address(0), stranger, 2 ether);
+        treasury.proposePairingWithdraw(address(0), dead, 2 ether);
         vm.stopPrank();
     }
 
@@ -167,9 +195,16 @@ contract ExperimentTreasuryTest is Fixture {
         assertNoSelector(t, abi.encodeWithSignature("owner()"));
     }
 
+    function test_pairingBeneficiaryRequired() public {
+        address[] memory none = new address[](0);
+        vm.expectRevert(ExperimentTreasury.ZeroAddress.selector);
+        new ExperimentTreasury(address(token), address(weth), dead, proposer, address(0), none);
+    }
+
     function test_emptyRecipientSetIsValid() public {
         address[] memory none = new address[](0);
-        ExperimentTreasury t2 = new ExperimentTreasury(address(token), address(weth), dead, proposer, none);
+        ExperimentTreasury t2 =
+            new ExperimentTreasury(address(token), address(weth), dead, proposer, pairingBeneficiary, none);
         assertEq(t2.dustRecipientCount(), 0);
         vm.prank(proposer);
         vm.expectRevert(ExperimentTreasury.NotDustRecipient.selector);

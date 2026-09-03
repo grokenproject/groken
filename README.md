@@ -53,7 +53,7 @@ Distinct address. GRKN may leave **only** as:
 - (a) dust to a constructor-frozen recipient set (empty set is valid; tests use one log-demo address), under **100 GRKN/tx**, **1,000 GRKN/week**, **5,000 GRKN lifetime**, with a reason string and event; or
 - (b) the documented dead address (same sink at experiment end / T+90d, or earlier). `sendGrknToDead` is proposer-only until start+90d, then permissionless remainder-to-dead. `sendRemainingGrknToDead` is permissionless only after T+90d.
 
-No third GRKN destination. No delayed GRKN-to-arbitrary-wallet. The 7-day delay is **pairing asset (ETH / WETH) only**. Leftover pairing asset has no dust exception. One documented proposer key, immutable. This is not OpenZeppelin `TimelockController`. There is no `DEFAULT_ADMIN_ROLE` and no `updateDelay`.
+No third GRKN destination. No delayed GRKN-to-arbitrary-wallet. The 7-day delay is **pairing asset (ETH / WETH) only**. After that delay, pairing ETH/WETH may leave only to the immutable pairing beneficiary (a published project wallet set at deploy) or the documented dead address. No third pairing destination. Leftover pairing asset has no dust exception. One documented proposer key, immutable. This is not OpenZeppelin `TimelockController`. There is no `DEFAULT_ADMIN_ROLE` and no `updateDelay`.
 
 ### 4. TeamVestLock
 

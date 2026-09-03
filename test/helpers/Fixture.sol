@@ -31,6 +31,7 @@ abstract contract Fixture is Test {
     address internal listingFeeDest;
     address internal mmDest;
     address internal lpBeneficiary;
+    address internal pairingBeneficiary;
     address internal stranger;
 
     GrokenToken internal token;
@@ -56,6 +57,7 @@ abstract contract Fixture is Test {
         listingFeeDest = makeAddr("listingFeeDest");
         mmDest = makeAddr("mmDest");
         lpBeneficiary = makeAddr("lpBeneficiary");
+        pairingBeneficiary = makeAddr("pairingBeneficiary");
         stranger = makeAddr("stranger");
 
         weth = new MockWETH();
@@ -70,7 +72,8 @@ abstract contract Fixture is Test {
         address[] memory dustRecipients = new address[](1);
         dustRecipients[0] = dustDemo;
         treasuryStart = block.timestamp;
-        treasury = new ExperimentTreasury(address(token), address(weth), dead, proposer, dustRecipients);
+        treasury =
+            new ExperimentTreasury(address(token), address(weth), dead, proposer, pairingBeneficiary, dustRecipients);
 
         lpToken.mint(launch, LP_LOCKED);
         locker = _deployLocker(launch, address(lpToken), lpBeneficiary, LP_LOCKED);

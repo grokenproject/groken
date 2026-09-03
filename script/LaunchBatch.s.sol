@@ -30,7 +30,7 @@ import {ListingReserve} from "../src/ListingReserve.sol";
  *      LP tokens (created out of band) are approved and pulled into ImmutableLPLock.
  *
  *      Required env (no live-looking defaults):
- *        INITIAL_HOLDER, TEAM_WALLET, PROPOSER, DEAD, WETH, AMM_RECIPIENT
+ *        INITIAL_HOLDER, TEAM_WALLET, PROPOSER, DEAD, PAIRING_BENEFICIARY, WETH, AMM_RECIPIENT
  *        DUST_RECIPIENTS (comma-separated; may be empty)
  *        LISTING_ALLOWLIST (comma-separated; may be empty)
  *        LP_TOKEN, LP_AMOUNT, LP_BENEFICIARY
@@ -48,6 +48,7 @@ contract LaunchBatchScript is Script {
         address teamWallet;
         address proposer;
         address dead;
+        address pairingBeneficiary;
         address weth;
         address ammRecipient;
         address lpToken;
@@ -75,6 +76,7 @@ contract LaunchBatchScript is Script {
         p.teamWallet = _req("TEAM_WALLET");
         p.proposer = _req("PROPOSER");
         p.dead = _req("DEAD");
+        p.pairingBeneficiary = _req("PAIRING_BENEFICIARY");
         p.weth = _req("WETH");
         p.ammRecipient = _req("AMM_RECIPIENT");
         p.lpToken = _req("LP_TOKEN");
@@ -91,6 +93,7 @@ contract LaunchBatchScript is Script {
         console2.log("teamWallet (beneficiary, not the vest)", p.teamWallet);
         console2.log("proposer", p.proposer);
         console2.log("dead", p.dead);
+        console2.log("pairingBeneficiary (pairing ETH/WETH only)", p.pairingBeneficiary);
         console2.log("weth", p.weth);
         console2.log("ammRecipient (80M GRKN; pool created out of band)", p.ammRecipient);
         console2.log("lpToken", p.lpToken);
@@ -104,7 +107,7 @@ contract LaunchBatchScript is Script {
         GrokenToken token = new GrokenToken(p.initialHolder);
         TeamVestLock vest = new TeamVestLock(address(token), p.teamWallet);
         ExperimentTreasury treasury =
-            new ExperimentTreasury(address(token), p.weth, p.dead, p.proposer, p.dustRecipients);
+            new ExperimentTreasury(address(token), p.weth, p.dead, p.proposer, p.pairingBeneficiary, p.dustRecipients);
         // Locker before listing so the locker address is on the listing project-blocklist.
         ImmutableLPLock locker = _lockLp(p);
         ListingReserve listing = _deployListing(token, vest, treasury, locker, p);
