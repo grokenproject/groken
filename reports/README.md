@@ -26,8 +26,8 @@ Re-run the commands above locally before any deploy, including Base Sepolia. Do 
 
 Recorded in `AUDIT.md`. Short version:
 
-- Slither `arbitrary-send-eth` / `low-level-calls` / `reentrancy-events` on treasury pairing ETH: intentional pairing path; state (`pendingPairing`) is deleted before the call.
-- Slither `timestamp`: intentional lock / delay / vest / experiment-end clocks.
+- Slither `arbitrary-send-eth` / `low-level-calls` / `reentrancy-events` on treasury pairing ETH: intentional pairing-custody FLAG; state (`pendingPairing`) is deleted before the call. Not a GRKN path.
+- Slither `timestamp`: intentional lock / delay / vest / experiment-end clocks, including proposer-only-until-T+90 gates on `sendToDead` / `sendGrknToDead`.
 - Slither `incorrect-equality` on `amount == 0`: empty-balance guards.
 - slither-check-erc: ERC-20 surface present. The remaining checkbox is the well-known ERC-20 approval race; this token does not add Permit (admin-off / extra-surface rule).
-- Aderyn: 0 high after CEI reorder of `ListingReserve.sendRemainderToDead` (delete pending, then read balance, then transfer). Lows are style (pragma `^0.8.20`, PUSH0, numeric literal).
+- Aderyn: 0 high. Lows are style (pragma `^0.8.20`, PUSH0, numeric literal, single-use modifier).
