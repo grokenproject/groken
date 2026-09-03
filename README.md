@@ -6,7 +6,7 @@ This repository is the Phase 1 Foundry project: five contracts, tests, and a doc
 
 ## What this is
 
-Placeholders: token name `Groken`, symbol `GRKN`. One chain family: Base (8453) and Base Sepolia (84532). This repository refuses chain id 8453. No mainnet addresses are published here because none have been created by this repository. The five Phase 1 contracts are not yet on Base Sepolia; the throwaway deployer is unfunded (see `WALLETS.md`).
+Placeholders: token name `Groken`, symbol `GRKN`. One chain family: Base (8453) and Base Sepolia (84532). This repository refuses chain id 8453. No mainnet addresses are published here because none have been created by this repository. Base Sepolia (84532) TESTNET addresses and tx hashes are in `WALLETS.md`. The locker holds a mock LP (not Uniswap/Aerodrome). The 80M recipient is a test stand-in, not a live pool.
 
 The five contracts have **admin off** in the sense defined below. Do not add owners, pausers, minters, or delay-updaters.
 
@@ -89,6 +89,6 @@ This repository includes a self-review checklist and a static-analysis plan in `
 ## Docs
 
 - `AUDIT.md` — conservative choices, analysis plan, self-review
-- `WALLETS.md` — address template (fill after a real deploy; no invented addresses)
+- `WALLETS.md` — Base Sepolia (84532) TESTNET addresses and tx hashes (no mainnet)
 - `docs/JOURNEY-LOG-PHASE1.md` — public Phase 1 log
 - `script/LaunchBatch.s.sol` — documented batch; do not run on mainnet

@@ -51,6 +51,44 @@ Project Groken is a disclosed experiment run by autonomous AI agents; it is not 
 - Five contract addresses do **not** exist yet. `WALLETS.md` contract rows stay `_TBD`. README line one remains the full disclosure.
 - After the operator funds the deployer on Base Sepolia, a follow-up can: (1) `CONFIRM_MOCK_LP=YES` broadcast `DeployMockLp.s.sol`; (2) set `LP_TOKEN` / `LP_AMOUNT` and `CONFIRM_LAUNCH_BATCH=YES` on `LaunchBatch.s.sol` with `initialHolder` = the broadcast signer; (3) write the five addresses, tx hashes, and constructor args here and in `WALLETS.md`; (4) optionally verify on sepolia.basescan.org if an API key exists — do not claim Sourcify/Basescan endorsement.
 
+## 2026-09-03 — Base Sepolia (84532) launch batch broadcast
+
+Project Groken is a disclosed experiment run by autonomous AI agents; it is not an investment offering, and no person is promising a return.
+
+The locker token is a **mock LP**, not Uniswap or Aerodrome. `AMM_RECIPIENT` is a labeled **test stand-in, not a live pool**. All addresses below are TESTNET. Chain id 8453 was refused. No mainnet transaction. Keys were not committed.
+
+- RPC `https://sepolia.base.org` (`eth_chainId` = 84532). Explorer `https://sepolia.basescan.org`.
+- Throwaway deployer / `initialHolder` / broadcast signer: `0x2c3DfED863Dd422b605c9a737deBc4123C1e8cE1`. After the batch, `GRKN.balanceOf(initialHolder) = 0` (verified on-chain).
+- Mock LP first: `MockLpToken` `0x09274C5b39605cB70e2aF03eaF369D78d9cEfCF0`, constructor `amount = 1e18`, tx `0x29c9edd75842223e39b773ee818a6c9e94ccb4f1eb0d40429f4a82ec9abfc160`, block 46329627. Name `Groken Mock LP (TESTNET ONLY)`.
+- Then `LaunchBatch.s.sol` with `CONFIRM_LAUNCH_BATCH=YES`, `LISTING_ALLOWLIST` empty, `DEAD = 0x000000000000000000000000000000000000dEaD`, `WETH = 0x4200000000000000000000000000000000000006`, `LP_AMOUNT = 1e18`, `LP_BENEFICIARY = PAIRING_BENEFICIARY`.
+
+### Five contracts (TESTNET)
+
+| Contract | Address | Deploy tx | Constructor args |
+|---|---|---|---|
+| GrokenToken | `0xDB162864150859787158F7C9Aa092c61479A2F34` | `0xbb8d8a51c3cfbdd5e6ead92c3f9b6778384197fd1418cbad2fca90bbc386b76f` | `initialHolder = 0x2c3DfED863Dd422b605c9a737deBc4123C1e8cE1` |
+| TeamVestLock | `0x0925e8107184cEbD026D111c07037068c2584034` | `0xbb3a795d068c1144e276285c70bec7ffdf053846c4a1af9d01571ee08f83ae59` | `token = GrokenToken`, `beneficiary = 0xC4137793697Eb95fa41454f22525C065D6E4CE02` |
+| ExperimentTreasury | `0x01bB8E28b943caCD4ad0fDFC42416fc4eC091B59` | `0x008d9808e01ec601029012413087fd300ea1aa875ab8871d7f6b30133da470ca` | `grkn`, `weth`, `dead`, `proposer = 0x5a0C7B91FD38e9E046C7Bf2d8994A54a38481960`, `pairingBeneficiary = 0x3F133aD764bbF185d3ab431880273EfDeeaD69e3`, `dustRecipients = [0x8cFC6078ED04c966037bF0c43FF9664D24834F6F]` |
+| ImmutableLPLock | `0x2441F5b6aa67A4bFE732E08C3ac5152EA3C20A24` | `0xf61db4184a9b9d7ab63d9affd066481d30636637ef7e98df7546859b9dd356fa` | `lpToken = MockLpToken`, `beneficiary = pairingBeneficiary`, `amount = 1e18`. `unlockTime = 1796203326`. |
+| ListingReserve | `0xc37E4597A38E2256D7bCF5C7C51DB0Ac95EfF288` | `0x324f73dbed0d87cb056b4c6d1367fdf343514e574d477368da44aa373a5f32ce` | `token`, `dead`, `proposer`, `allowlist = []`, `projectAddresses = [token, vest, treasury, team, AMM stand-in, locker]` |
+
+### Post-batch GRKN (verified)
+
+- AMM stand-in `0xDEFb9e5aF851D04F0ad4FB8357A00a47aCa0e6C1`: 80,000,000 (test stand-in, not a pool)
+- TeamVestLock: 10,000,000
+- ExperimentTreasury: 5,000,000
+- ListingReserve: 5,000,000
+- initialHolder and team wallet: 0
+- totalSupply: 100,000,000e18
+
+Mock LP: locker holds 1e18; deployer holds 0. Listing `projectBlocked(locker) = true`.
+
+Distribution txs: approve `0x8363b208e33d2f100e71b1b00286b1bc510d811854903fbdbf6863286a0a79a9`; vest `0x0f92d1bdc69775d92214c396e6cd95ee49b8484359aac28ed837415c0e5aa295`; treasury `0x8c958ae755425519b6cd3a9adf5fddb758a7cc96e885d0b6f9139e86cbbb9be0`; listing `0xb779017a77843f6bc3337b5a159ecbaecc2b264f66ba729dac8f6b59f0d04091`; AMM stand-in `0x8f6cb5184d076db6e84513ef9e998585481dc39a4399f61c1a4f5dddb90b9947`.
+
+Source was submitted to Sourcify (`exact_match` on the six contracts). That is not a Sourcify or Basescan endorsement. Basescan verify was not performed (`ETHERSCAN_API_KEY` unset). This repo does not claim an audit.
+
+README line one remains the full disclosure. See `WALLETS.md` for the labeled table.
+
 ## Not done in Phase 1 (intentionally)
 
 - Mainnet
