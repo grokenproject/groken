@@ -11,8 +11,9 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
  *      and has no swap / addLiquidity surface. Transfers to constructor-frozen project addresses
  *      hard-revert. `proposeTransfer` takes purpose `ListingFee` or `MMInventory`, a 7-day delay,
  *      and at most one pending proposal. `executeTransfer` reverts after start+90d (no post-kill
- *      execute; pending-before-90 die). `sendToDead` is proposer-only (anytime). After start+90d,
- *      new proposes revert and remainder-to-dead is permissionless. Unused GRKN goes to dead.
+ *      execute; pending-before-90 die). `sendToDead` is proposer-only until start+90d, then
+ *      permissionless (remainder-to-dead). After start+90d, new proposes revert and
+ *      `sendRemainderToDead` is permissionless. Unused GRKN goes to dead.
  *      There is no leftover-deal exception.
  */
 contract ListingReserve {
@@ -152,10 +153,11 @@ contract ListingReserve {
     }
 
     /**
-     * @notice Send GRKN to dead. Proposer only. Available anytime, including before T+90d.
-     * @dev Early unused-remainder path. Not a public grief button on the 5M listing bag.
+     * @notice Send GRKN to dead. Proposer-only before start+90d; permissionless remainder path after.
+     * @dev Early unused-remainder is not a public grief button on the 5M listing bag.
      */
-    function sendToDead(uint256 amount) external onlyProposer {
+    function sendToDead(uint256 amount) external {
+        if (block.timestamp < experimentEnd() && msg.sender != proposer) revert NotProposer();
         if (amount == 0) revert ZeroAmount();
         token.safeTransfer(dead, amount);
         emit SentToDead(dead, amount);

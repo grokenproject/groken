@@ -27,6 +27,13 @@ Public log for the Phase 1 Foundry repository. Later phases should append, not r
 - Static-analysis reports committed under `reports/` (see AUDIT.md “What was run”).
 - README line one remains the full disclosure. No invented addresses. No mainnet.
 
+## 2026-09-03 — CONTRACT-PHASE0 review follow-up
+
+- `sendToDead` / `sendGrknToDead`: proposer-only before start+90d; a random address can call them after T+90 (permissionless remainder). Tests assert both sides.
+- Launch batch deploys `ImmutableLPLock` first and puts it on the listing project-blocklist.
+- Pairing `to` after 7 days remains a pairing-custody FLAG, not a GRKN path.
+- Analysis reports remain under `reports/` and are re-run after this change.
+
 ## Not done in Phase 1 (intentionally)
 
 - Mainnet

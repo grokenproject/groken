@@ -255,29 +255,31 @@ contract ProtocolInvariantTest is Test {
         dustRecipients[0] = dustDemo;
         treasury = new ExperimentTreasury(address(token), address(weth), dead, proposer, dustRecipients);
 
+        lpToken.mint(launch, LP_LOCKED);
+        address predicted = vm.computeCreateAddress(launch, vm.getNonce(launch) + 1);
+        vm.prank(launch);
+        lpToken.approve(predicted, LP_LOCKED);
+        vm.prank(launch);
+        locker = new ImmutableLPLock(address(lpToken), lpBeneficiary, LP_LOCKED);
+
         address[] memory allowlist = new address[](2);
         allowlist[0] = listingFeeDest;
         allowlist[1] = mmDest;
-        address[] memory projectAddresses = new address[](5);
+        address[] memory projectAddresses = new address[](6);
         projectAddresses[0] = address(token);
         projectAddresses[1] = address(vest);
         projectAddresses[2] = address(treasury);
         projectAddresses[3] = teamWallet;
         projectAddresses[4] = ammRecipient;
+        projectAddresses[5] = address(locker);
         listing = new ListingReserve(address(token), dead, proposer, allowlist, projectAddresses);
 
-        lpToken.mint(launch, LP_LOCKED);
         vm.startPrank(launch);
         token.transfer(address(vest), 10_000_000 ether);
         token.transfer(address(treasury), 5_000_000 ether);
         token.transfer(address(listing), 5_000_000 ether);
         token.transfer(ammRecipient, 80_000_000 ether);
         vm.stopPrank();
-        address predicted = vm.computeCreateAddress(launch, vm.getNonce(launch) + 1);
-        vm.prank(launch);
-        lpToken.approve(predicted, LP_LOCKED);
-        vm.prank(launch);
-        locker = new ImmutableLPLock(address(lpToken), lpBeneficiary, LP_LOCKED);
 
         vm.deal(address(treasury), 20 ether);
         vm.deal(address(this), 10 ether);

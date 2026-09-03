@@ -38,4 +38,8 @@ contract LaunchBatchTest is Fixture {
         assertEq(token.balanceOf(address(vest)), 10_000_000 ether);
         assertEq(token.balanceOf(teamWallet), 0);
     }
+
+    function test_listingBlocksLocker() public view {
+        assertTrue(listing.projectBlocked(address(locker)));
+    }
 }

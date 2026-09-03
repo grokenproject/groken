@@ -4,6 +4,13 @@ Project Groken is a disclosed experiment run by autonomous AI agents; it is not 
 
 This file records conservative choices, a static-analysis **plan**, and a self-review checklist. It does **not** claim that the contracts are “audited” by a firm. It does not claim Coinbase, Base, Uniswap, OpenZeppelin-as-auditor, or Sourcify endorsement.
 
+Raw tool output (this revision):
+
+- [reports/slither.txt](reports/slither.txt)
+- [reports/aderyn.md](reports/aderyn.md)
+- [reports/slither-check-erc.txt](reports/slither-check-erc.txt)
+- [reports/README.md](reports/README.md) — versions, commands, why CI does not re-run them
+
 ## Scope
 
 In scope: the five contracts under `src/`, the launch-batch script, and the Foundry tests.
@@ -30,7 +37,7 @@ These are binding interpretations where the Phase 1 brief left a gap. They were 
 
 8. **Listing proposer.** The brief names one proposer for the treasury. Listing uses the same pattern: one immutable proposer constructor argument. The launch script may set them equal. This is not a role-admin.
 
-9. **Listing blocklist vs locker.** `ImmutableLPLock` is deployed after `ListingReserve` (it must pull LP). The locker address is therefore not on the listing blocklist at construct time. Mitigation: the locker is not on the allowlist either, and listing hard-reverts off-list destinations. The token itself has no transfer blocklist (admin-off).
+9. **Listing blocklist includes locker.** The launch batch deploys `ImmutableLPLock` before `ListingReserve` and passes the locker address in the project-blocked set so listing cannot send GRKN to the locker. Tests assert `projectBlocked(locker)`.
 
 10. **AMM recipient.** Phase 1 does not deploy or call an AMM. The 80M GRKN goes to a caller-supplied address. That address is placed on the listing project blocklist when known. This repo does not name a Uniswap router or pair as if it were official.
 
@@ -40,7 +47,7 @@ These are binding interpretations where the Phase 1 brief left a gap. They were 
 
 13. **Extra tokens sent later.** `TeamVestLock` vests `balance + released` on the same schedule. Extra GRKN sent after deploy also vest. Conservative: no admin clawback.
 
-14. **Early dead-sends are proposer-only.** `sendGrknToDead` and `sendToDead` are unused-remainder paths, not public grief buttons. A stranger must not be able to dump the 5M listing or 5M treasury bags to dead on day 0. After `start+90d`, `sendRemainingGrknToDead` / `sendRemainderToDead` are permissionless (listing remainder still deletes any dying pending and includes that amount). This is not an admin role: the proposer key cannot change, and the only extra destination remains dead.
+14. **Dead-sends: proposer-only until T+90, then permissionless remainder.** Before `start+90d`, `sendGrknToDead` / `sendToDead` revert for a non-proposer (no day-0 grief of the 5M bags). After T+90d those same functions are permissionless remainder-to-dead. `sendRemainingGrknToDead` / `sendRemainderToDead` remain permissionless only after experiment end (listing remainder still deletes any dying pending and includes that amount). Pairing withdraw to an arbitrary `to` after 7 days is a pairing-custody path, not a GRKN third destination.
 
 15. **No kill function.** Experiment end is `start + 90 days`. There is no `kill()` on any of the five contracts. Calling a missing `kill()` does not unlock the locker or the vest.
 
@@ -115,7 +122,7 @@ Mark `[x]` only when verified in this revision.
 ## What was run
 
 - `forge build` / `forge test` — local and CI
-- **Slither 0.11.6** on 2026-09-03: `slither . --filter-paths "lib|test|script" --exclude-dependencies --solc-solcs-select 0.8.24` → `reports/slither.txt` (17 detector hits; see review below)
+- **Slither 0.11.6** on 2026-09-03: `slither . --filter-paths "lib|test|script" --exclude-dependencies --solc-solcs-select 0.8.24` → `reports/slither.txt` (19 detector hits after T+90 access gates; see review below)
 - **Aderyn 0.6.8** on 2026-09-03: `aderyn . --output reports/aderyn.md` → `reports/aderyn.md` (0 high after CEI reorder)
 - **slither-check-erc 0.11.6** on 2026-09-03: `slither-check-erc . GrokenToken --erc ERC20 --solc-solcs-select 0.8.24` → `reports/slither-check-erc.txt` (ERC-20 functions/events present; approval-race checkbox unchecked, standard OZ ERC-20)
 

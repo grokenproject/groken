@@ -65,7 +65,7 @@ contract ExperimentTreasuryTest is Fixture {
         treasury.sendDust(dustDemo, 1 ether, "");
     }
 
-    function test_sendGrknToDeadIsProposerOnly() public {
+    function test_sendGrknToDeadRandomCannotBeforeT90_canAfter() public {
         uint256 before_ = token.balanceOf(address(treasury));
         vm.prank(stranger);
         vm.expectRevert(ExperimentTreasury.NotProposer.selector);
@@ -75,6 +75,11 @@ contract ExperimentTreasuryTest is Fixture {
         treasury.sendGrknToDead(1000 ether);
         assertEq(token.balanceOf(dead), 1000 ether);
         assertEq(token.balanceOf(address(treasury)), before_ - 1000 ether);
+
+        vm.warp(treasury.experimentEnd());
+        vm.prank(stranger);
+        treasury.sendGrknToDead(500 ether);
+        assertEq(token.balanceOf(dead), 1500 ether);
     }
 
     function test_remainingToDeadOnlyAfter90dPermissionless() public {

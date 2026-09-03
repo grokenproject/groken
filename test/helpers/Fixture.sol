@@ -72,21 +72,22 @@ abstract contract Fixture is Test {
         treasuryStart = block.timestamp;
         treasury = new ExperimentTreasury(address(token), address(weth), dead, proposer, dustRecipients);
 
+        lpToken.mint(launch, LP_LOCKED);
+        locker = _deployLocker(launch, address(lpToken), lpBeneficiary, LP_LOCKED);
+        lockerUnlock = locker.unlockTime();
+
         address[] memory allowlist = new address[](2);
         allowlist[0] = listingFeeDest;
         allowlist[1] = mmDest;
-        address[] memory projectAddresses = new address[](5);
+        address[] memory projectAddresses = new address[](6);
         projectAddresses[0] = address(token);
         projectAddresses[1] = address(vest);
         projectAddresses[2] = address(treasury);
         projectAddresses[3] = teamWallet;
         projectAddresses[4] = ammRecipient;
+        projectAddresses[5] = address(locker);
         listingStart = block.timestamp;
         listing = new ListingReserve(address(token), dead, proposer, allowlist, projectAddresses);
-
-        lpToken.mint(launch, LP_LOCKED);
-        locker = _deployLocker(launch, address(lpToken), lpBeneficiary, LP_LOCKED);
-        lockerUnlock = locker.unlockTime();
     }
 
     /// @dev approve consumes nonce N; CREATE uses N+1.

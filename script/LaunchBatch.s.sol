@@ -105,26 +105,30 @@ contract LaunchBatchScript is Script {
         TeamVestLock vest = new TeamVestLock(address(token), p.teamWallet);
         ExperimentTreasury treasury =
             new ExperimentTreasury(address(token), p.weth, p.dead, p.proposer, p.dustRecipients);
-
-        ListingReserve listing = _deployListing(token, vest, treasury, p);
-        _distribute(token, vest, treasury, listing, p);
+        // Locker before listing so the locker address is on the listing project-blocklist.
         ImmutableLPLock locker = _lockLp(p);
+        ListingReserve listing = _deployListing(token, vest, treasury, locker, p);
+        _distribute(token, vest, treasury, listing, p);
 
         vm.stopBroadcast();
         _requireEmptyHolder(address(token), p.initialHolder);
         _logDeployed(address(token), address(vest), address(treasury), address(listing), address(locker));
     }
 
-    function _deployListing(GrokenToken token, TeamVestLock vest, ExperimentTreasury treasury, Plan memory p)
-        internal
-        returns (ListingReserve listing)
-    {
-        address[] memory projectAddresses = new address[](5);
+    function _deployListing(
+        GrokenToken token,
+        TeamVestLock vest,
+        ExperimentTreasury treasury,
+        ImmutableLPLock locker,
+        Plan memory p
+    ) internal returns (ListingReserve listing) {
+        address[] memory projectAddresses = new address[](6);
         projectAddresses[0] = address(token);
         projectAddresses[1] = address(vest);
         projectAddresses[2] = address(treasury);
         projectAddresses[3] = p.teamWallet;
         projectAddresses[4] = p.ammRecipient;
+        projectAddresses[5] = address(locker);
         listing = new ListingReserve(address(token), p.dead, p.proposer, p.allowlist, projectAddresses);
     }
 

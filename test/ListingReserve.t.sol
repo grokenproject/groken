@@ -37,6 +37,8 @@ contract ListingReserveTest is Fixture {
         listing.proposeTransfer(teamWallet, 1 ether, ListingReserve.Purpose.ListingFee);
         vm.expectRevert(ListingReserve.ProjectAddress.selector);
         listing.proposeTransfer(address(listing), 1 ether, ListingReserve.Purpose.ListingFee);
+        vm.expectRevert(ListingReserve.ProjectAddress.selector);
+        listing.proposeTransfer(address(locker), 1 ether, ListingReserve.Purpose.ListingFee);
         vm.stopPrank();
     }
 
@@ -91,7 +93,7 @@ contract ListingReserveTest is Fixture {
         listing.proposeTransfer(listingFeeDest, 1 ether, ListingReserve.Purpose.ListingFee);
     }
 
-    function test_sendToDeadIsProposerOnly() public {
+    function test_sendToDeadRandomCannotBeforeT90_canAfter() public {
         vm.prank(stranger);
         vm.expectRevert(ListingReserve.NotProposer.selector);
         listing.sendToDead(100 ether);
@@ -99,6 +101,17 @@ contract ListingReserveTest is Fixture {
         vm.prank(proposer);
         listing.sendToDead(100 ether);
         assertEq(token.balanceOf(dead), 100 ether);
+
+        vm.warp(listing.experimentEnd());
+        vm.prank(stranger);
+        listing.sendToDead(50 ether);
+        assertEq(token.balanceOf(dead), 150 ether);
+    }
+
+    function test_cannotProposeToLocker() public {
+        vm.prank(proposer);
+        vm.expectRevert(ListingReserve.ProjectAddress.selector);
+        listing.proposeTransfer(address(locker), 1 ether, ListingReserve.Purpose.ListingFee);
     }
 
     function test_remainderToDeadAfter90dPermissionless() public {
