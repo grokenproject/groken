@@ -40,7 +40,7 @@ These are binding interpretations where the Phase 1 brief left a gap. They were 
 
 13. **Extra tokens sent later.** `TeamVestLock` vests `balance + released` on the same schedule. Extra GRKN sent after deploy also vest. Conservative: no admin clawback.
 
-14. **Permissionless sinks.** `sendGrknToDead` / `sendToDead` are permissionless. Anyone can move GRKN from treasury or listing to dead. That narrows, rather than expands, operator discretion.
+14. **Early dead-sends are proposer-only.** `sendGrknToDead` and `sendToDead` are unused-remainder paths, not public grief buttons. A stranger must not be able to dump the 5M listing or 5M treasury bags to dead on day 0. After `start+90d`, `sendRemainingGrknToDead` / `sendRemainderToDead` are permissionless (listing remainder still deletes any dying pending and includes that amount). This is not an admin role: the proposer key cannot change, and the only extra destination remains dead.
 
 15. **No kill function.** Experiment end is `start + 90 days`. There is no `kill()` on any of the five contracts. Calling a missing `kill()` does not unlock the locker or the vest.
 
@@ -69,11 +69,10 @@ Review detectors that matter for this design: `arbitrary-send-eth`, `reentrancy-
 ### slither-check-erc
 
 ```bash
-# Only after a real deploy with a known token address. Do not invent one.
-slither-check-erc --erc ERC20 <deployed-token-address> GrokenToken
+# Source-based check (no invented live address):
+slither-check-erc . GrokenToken --erc ERC20 --solc-solcs-select 0.8.24
+# After a real deploy, re-run against that address. Do not invent one.
 ```
-
-Phase 1 has no published token address in this repo.
 
 ### Aderyn
 
@@ -109,21 +108,30 @@ Mark `[x]` only when verified in this revision.
 - [x] Foundry unit + fuzz + invariant tests cover the listed properties.
 - [x] CI runs `forge test`.
 - [x] OpenZeppelin is pinned to git tag `v5.4.0`.
-- [ ] Slither run on this revision (see “What was run”).
-- [ ] Aderyn run on this revision.
-- [ ] slither-check-erc run (blocked: no deployed address).
+- [x] Slither run on this revision (see “What was run” and `reports/slither.txt`).
+- [x] Aderyn run on this revision (`reports/aderyn.md`).
+- [x] slither-check-erc run against this repo’s `GrokenToken` source (`reports/slither-check-erc.txt`). No live address invented.
 
 ## What was run
 
-Recorded when the commands execute. If a tool is not installed, it is **not** claimed.
+- `forge build` / `forge test` — local and CI
+- **Slither 0.11.6** on 2026-09-03: `slither . --filter-paths "lib|test|script" --exclude-dependencies --solc-solcs-select 0.8.24` → `reports/slither.txt` (17 detector hits; see review below)
+- **Aderyn 0.6.8** on 2026-09-03: `aderyn . --output reports/aderyn.md` → `reports/aderyn.md` (0 high after CEI reorder)
+- **slither-check-erc 0.11.6** on 2026-09-03: `slither-check-erc . GrokenToken --erc ERC20 --solc-solcs-select 0.8.24` → `reports/slither-check-erc.txt` (ERC-20 functions/events present; approval-race checkbox unchecked, standard OZ ERC-20)
 
-- `forge build` — see CI / local run
-- `forge test` — see CI / local run
-- Slither / Aderyn / slither-check-erc — not claimed until run
+These three tools are **not** in GitHub Actions. CI is Foundry-only. Reasons: Slither exits non-zero on informational detectors this design requires (timestamp clocks, pairing ETH `call`); the Actions image does not ship Slither/Aderyn/solc-select; committed snapshots are the review artifact. slither-check-erc was run on **source**, not a published chain address.
+
+### Slither / Aderyn review (not “audited”)
+
+- `arbitrary-send-eth` / `low-level-calls` / `reentrancy-events` on `executePairingWithdraw`: pairing ETH to the proposed `to` after the 7-day delay. `pendingPairing` is deleted before the call. Intentional.
+- `timestamp`: 90-day experiment end, 7-day delays, locker unlock, vest cliff. Intentional.
+- `incorrect-equality` on `amount == 0`: empty-balance guards. Intentional.
+- Aderyn H-1 (state change after `balanceOf`) was a CEI order issue on `sendRemainderToDead`. Fixed by deleting `pending` first, then reading the balance (pending tokens remain in the contract), then transferring. Behavior unchanged: remainder including any pending amount goes to dead; pending is cleared.
+- slither-check-erc approval race: vanilla OZ v5 ERC-20. No Permit added (extra surface / admin-off rule).
 
 ## Known intentional behaviors (not defects)
 
-- Treasury and listing can hold pairing ETH / leftover GRKN that operators fail to move; permissionless dead-sends cover GRKN after or before T+90d, not pairing ETH.
+- Treasury and listing can hold pairing ETH / leftover GRKN that operators fail to move. Early GRKN-to-dead is proposer-only; after T+90d the remainder-to-dead paths are permissionless. Pairing ETH has no dust exception and still needs the 7-day delay.
 - A wrong pairing or listing proposal occupies the single pending slot until it executes (listing: or until T+90d remainder-to-dead). No cancel.
 - Vest and locker ignore experiment end.
 - Token transfers to arbitrary EOAs are unrestricted (plain ERC-20). Restrictions live on treasury, listing, vest, and locker.

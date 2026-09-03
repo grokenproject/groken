@@ -51,7 +51,7 @@ No admin. Constructor: LP token, immutable beneficiary, `unlockTime = now + 90 d
 Distinct address. GRKN may leave **only** as:
 
 - (a) dust to a constructor-frozen recipient set (empty set is valid; tests use one log-demo address), under **100 GRKN/tx**, **1,000 GRKN/week**, **5,000 GRKN lifetime**, with a reason string and event; or
-- (b) the documented dead address (same sink at experiment end / T+90d, or earlier).
+- (b) the documented dead address (same sink at experiment end / T+90d, or earlier). Early `sendGrknToDead` is proposer-only unused-remainder; after T+90d, `sendRemainingGrknToDead` is permissionless.
 
 No third GRKN destination. No delayed GRKN-to-arbitrary-wallet. The 7-day delay is **pairing asset (ETH / WETH) only**. Leftover pairing asset has no dust exception. One documented proposer key, immutable. This is not OpenZeppelin `TimelockController`. There is no `DEFAULT_ADMIN_ROLE` and no `updateDelay`.
 
@@ -63,7 +63,7 @@ Vest-survives (frozen). The 10M allocation is locked **here**, not in the publis
 
 ### 5. ListingReserve
 
-Immutable allowlist at deploy (empty allowlist is valid). Never an AMM. Hard-reverts transfers to constructor-frozen project addresses. `proposeTransfer(ListingFee | MMInventory)` with a 7-day delay and one pending proposal. `executeTransfer` reverts at or after start+90d (no post-kill execute; pending-before-90 die). `sendToDead` anytime. After start+90d, new proposes revert and remainder-to-dead is permissionless. Unused GRKN goes to dead. No leftover-deal exception.
+Immutable allowlist at deploy (empty allowlist is valid). Never an AMM. Hard-reverts transfers to constructor-frozen project addresses. `proposeTransfer(ListingFee | MMInventory)` with a 7-day delay and one pending proposal. `executeTransfer` reverts at or after start+90d (no post-kill execute; pending-before-90 die). `sendToDead` is proposer-only (anytime). After start+90d, new proposes revert and remainder-to-dead is permissionless. Unused GRKN goes to dead. No leftover-deal exception.
 
 ## Stack
 

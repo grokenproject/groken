@@ -65,19 +65,25 @@ contract ExperimentTreasuryTest is Fixture {
         treasury.sendDust(dustDemo, 1 ether, "");
     }
 
-    function test_sendGrknToDeadAnytime() public {
+    function test_sendGrknToDeadIsProposerOnly() public {
         uint256 before_ = token.balanceOf(address(treasury));
+        vm.prank(stranger);
+        vm.expectRevert(ExperimentTreasury.NotProposer.selector);
+        treasury.sendGrknToDead(1000 ether);
+
+        vm.prank(proposer);
         treasury.sendGrknToDead(1000 ether);
         assertEq(token.balanceOf(dead), 1000 ether);
         assertEq(token.balanceOf(address(treasury)), before_ - 1000 ether);
     }
 
-    function test_remainingToDeadOnlyAfter90d() public {
+    function test_remainingToDeadOnlyAfter90dPermissionless() public {
         vm.expectRevert(ExperimentTreasury.ExperimentNotEnded.selector);
         treasury.sendRemainingGrknToDead();
 
         vm.warp(treasury.experimentEnd());
         uint256 leftover = token.balanceOf(address(treasury));
+        vm.prank(stranger);
         treasury.sendRemainingGrknToDead();
         assertEq(token.balanceOf(dead), leftover);
         assertEq(token.balanceOf(address(treasury)), 0);

@@ -142,9 +142,10 @@ contract ExperimentTreasury {
     }
 
     /**
-     * @notice Send GRKN to the documented dead address. Permissionless. Available before, at, or after T+90d.
+     * @notice Send unused GRKN to the documented dead address. Proposer only.
+     * @dev Early unused-remainder path. Not a public grief button on the treasury bag.
      */
-    function sendGrknToDead(uint256 amount) external {
+    function sendGrknToDead(uint256 amount) external onlyProposer {
         if (amount == 0) revert ZeroAmount();
         grkn.safeTransfer(dead, amount);
         emit GrknSentToDead(dead, amount);

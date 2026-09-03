@@ -19,6 +19,14 @@ Public log for the Phase 1 Foundry repository. Later phases should append, not r
 - CI: `forge test`.
 - No Base mainnet deploy. Sepolia deploy not performed (no throwaway key shipped).
 
+## 2026-09-03 — Dev Bot review (CONTRACT-PHASE0)
+
+- `ListingReserve.sendToDead` is proposer-only. `sendRemainderToDead` stays permissionless after start+90d and still deletes pending / includes the pending amount.
+- `ExperimentTreasury.sendGrknToDead` is proposer-only. `sendRemainingGrknToDead` stays permissionless after experimentEnd.
+- No `sendUnreleasedToDead` on `TeamVestLock`. Vest math unchanged.
+- Static-analysis reports committed under `reports/` (see AUDIT.md “What was run”).
+- README line one remains the full disclosure. No invented addresses. No mainnet.
+
 ## Not done in Phase 1 (intentionally)
 
 - Mainnet

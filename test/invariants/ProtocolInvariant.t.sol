@@ -111,6 +111,7 @@ contract Handler is Test {
         if (bal == 0) return;
         amount = bound(amount, 1, bal);
         uint256 beforeDead = token.balanceOf(dead);
+        vm.prank(proposer);
         try treasury.sendGrknToDead(amount) {
             ghostTreasuryDead += token.balanceOf(dead) - beforeDead;
         } catch {}
@@ -191,6 +192,7 @@ contract Handler is Test {
         if (bal == 0) return;
         amount = bound(amount, 1, bal);
         uint256 beforeDead = token.balanceOf(dead);
+        vm.prank(proposer);
         try listing.sendToDead(amount) {
             ghostListingToDead += token.balanceOf(dead) - beforeDead;
         } catch {}

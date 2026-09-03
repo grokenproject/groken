@@ -91,7 +91,12 @@ contract ListingReserveTest is Fixture {
         listing.proposeTransfer(listingFeeDest, 1 ether, ListingReserve.Purpose.ListingFee);
     }
 
-    function test_sendToDeadAnytime() public {
+    function test_sendToDeadIsProposerOnly() public {
+        vm.prank(stranger);
+        vm.expectRevert(ListingReserve.NotProposer.selector);
+        listing.sendToDead(100 ether);
+
+        vm.prank(proposer);
         listing.sendToDead(100 ether);
         assertEq(token.balanceOf(dead), 100 ether);
     }
@@ -104,6 +109,23 @@ contract ListingReserveTest is Fixture {
         vm.prank(stranger);
         listing.sendRemainderToDead();
         assertEq(token.balanceOf(address(listing)), 0);
+        assertEq(token.balanceOf(dead), LISTING_ALLOCATION);
+    }
+
+    function test_remainderToDeadIncludesPendingAndDeletesIt() public {
+        vm.prank(proposer);
+        listing.proposeTransfer(listingFeeDest, 10 ether, ListingReserve.Purpose.ListingFee);
+        (,,,, bool existsBefore) = listing.pending();
+        assertTrue(existsBefore);
+
+        vm.warp(listing.experimentEnd());
+        vm.prank(stranger);
+        listing.sendRemainderToDead();
+
+        (,,,, bool existsAfter) = listing.pending();
+        assertFalse(existsAfter);
+        assertEq(token.balanceOf(address(listing)), 0);
+        assertEq(token.balanceOf(listingFeeDest), 0);
         assertEq(token.balanceOf(dead), LISTING_ALLOCATION);
     }
 

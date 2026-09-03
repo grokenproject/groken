@@ -11,8 +11,8 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
  *      and has no swap / addLiquidity surface. Transfers to constructor-frozen project addresses
  *      hard-revert. `proposeTransfer` takes purpose `ListingFee` or `MMInventory`, a 7-day delay,
  *      and at most one pending proposal. `executeTransfer` reverts after start+90d (no post-kill
- *      execute; pending-before-90 die). `sendToDead` is available anytime. After start+90d, new
- *      proposes revert and remainder-to-dead is permissionless. Unused GRKN goes to dead.
+ *      execute; pending-before-90 die). `sendToDead` is proposer-only (anytime). After start+90d,
+ *      new proposes revert and remainder-to-dead is permissionless. Unused GRKN goes to dead.
  *      There is no leftover-deal exception.
  */
 contract ListingReserve {
@@ -152,9 +152,10 @@ contract ListingReserve {
     }
 
     /**
-     * @notice Send GRKN to dead. Permissionless. Available anytime, including before T+90d.
+     * @notice Send GRKN to dead. Proposer only. Available anytime, including before T+90d.
+     * @dev Early unused-remainder path. Not a public grief button on the 5M listing bag.
      */
-    function sendToDead(uint256 amount) external {
+    function sendToDead(uint256 amount) external onlyProposer {
         if (amount == 0) revert ZeroAmount();
         token.safeTransfer(dead, amount);
         emit SentToDead(dead, amount);
@@ -165,10 +166,10 @@ contract ListingReserve {
      */
     function sendRemainderToDead() external {
         if (block.timestamp < experimentEnd()) revert ExperimentNotEnded();
+        // Drop any dying pending first (CEI). Pending tokens are still in this balance.
+        delete pending;
         uint256 amount = token.balanceOf(address(this));
         if (amount == 0) revert ZeroAmount();
-        // Drop any dying pending so storage is clean; it cannot execute after T+90d anyway.
-        delete pending;
         token.safeTransfer(dead, amount);
         emit SentToDead(dead, amount);
     }
