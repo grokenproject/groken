@@ -1,0 +1,78 @@
+'forge clean' running (wd: /workspace)
+'forge config --json' running
+'forge build --build-info --deny never --skip ./test/** ./script/** --force' running (wd: /workspace)
+INFO:Detectors:
+Detector: arbitrary-send-eth
+ExperimentTreasury.executePairingWithdraw() (src/ExperimentTreasury.sol#187-204) sends eth to arbitrary user
+	Dangerous calls:
+	- (ok,None) = p.to.call{value: p.amount}() (src/ExperimentTreasury.sol#196)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#functions-that-send-ether-to-arbitrary-destinations
+INFO:Detectors:
+Detector: incorrect-equality
+ExperimentTreasury.sendRemainingGrknToDead() (src/ExperimentTreasury.sol#159-165) uses a dangerous strict equality:
+	- amount == 0 (src/ExperimentTreasury.sol#162)
+ImmutableLPLock.release() (src/ImmutableLPLock.sol#59-65) uses a dangerous strict equality:
+	- amount == 0 (src/ImmutableLPLock.sol#62)
+ListingReserve.sendRemainderToDead() (src/ListingReserve.sol#169-177) uses a dangerous strict equality:
+	- amount == 0 (src/ListingReserve.sol#174)
+TeamVestLock.release() (src/TeamVestLock.sol#79-85) uses a dangerous strict equality:
+	- amount == 0 (src/TeamVestLock.sol#81)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#dangerous-strict-equalities
+INFO:Detectors:
+Detector: reentrancy-events
+Reentrancy in ExperimentTreasury.executePairingWithdraw() (src/ExperimentTreasury.sol#187-204):
+	External calls:
+	- (ok,None) = p.to.call{value: p.amount}() (src/ExperimentTreasury.sol#196)
+	Event emitted after the call(s):
+	- PairingExecuted(p.token,p.to,p.amount) (src/ExperimentTreasury.sol#203)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#reentrancy-vulnerabilities-4
+INFO:Detectors:
+Detector: timestamp
+ExperimentTreasury.sendGrknToDead(uint256) (src/ExperimentTreasury.sol#149-154) uses timestamp for comparisons
+	Dangerous comparisons:
+	- block.timestamp < experimentEnd() && msg.sender != proposer (src/ExperimentTreasury.sol#150)
+ExperimentTreasury.sendRemainingGrknToDead() (src/ExperimentTreasury.sol#159-165) uses timestamp for comparisons
+	Dangerous comparisons:
+	- block.timestamp < experimentEnd() (src/ExperimentTreasury.sol#160)
+ExperimentTreasury.executePairingWithdraw() (src/ExperimentTreasury.sol#187-204) uses timestamp for comparisons
+	Dangerous comparisons:
+	- block.timestamp < p.eta (src/ExperimentTreasury.sol#190)
+	- p.token == address(0) (src/ExperimentTreasury.sol#194)
+	- address(this).balance < p.amount (src/ExperimentTreasury.sol#195)
+	- IERC20(p.token).balanceOf(address(this)) < p.amount (src/ExperimentTreasury.sol#199)
+ExperimentTreasury._rollDustWeek() (src/ExperimentTreasury.sol#206-211) uses timestamp for comparisons
+	Dangerous comparisons:
+	- block.timestamp >= weekStart + 604800 (src/ExperimentTreasury.sol#207)
+ImmutableLPLock.release() (src/ImmutableLPLock.sol#59-65) uses timestamp for comparisons
+	Dangerous comparisons:
+	- block.timestamp < unlockTime (src/ImmutableLPLock.sol#60)
+ListingReserve.proposeTransfer(address,uint256,ListingReserve.Purpose) (src/ListingReserve.sol#127-137) uses timestamp for comparisons
+	Dangerous comparisons:
+	- block.timestamp >= experimentEnd() (src/ListingReserve.sol#128)
+ListingReserve.executeTransfer() (src/ListingReserve.sol#142-153) uses timestamp for comparisons
+	Dangerous comparisons:
+	- block.timestamp >= experimentEnd() (src/ListingReserve.sol#143)
+	- block.timestamp < p.eta (src/ListingReserve.sol#146)
+ListingReserve.sendToDead(uint256) (src/ListingReserve.sol#159-164) uses timestamp for comparisons
+	Dangerous comparisons:
+	- block.timestamp < experimentEnd() && msg.sender != proposer (src/ListingReserve.sol#160)
+ListingReserve.sendRemainderToDead() (src/ListingReserve.sol#169-177) uses timestamp for comparisons
+	Dangerous comparisons:
+	- block.timestamp < experimentEnd() (src/ListingReserve.sol#170)
+TeamVestLock.vestedAmount(uint256) (src/TeamVestLock.sol#61-68) uses timestamp for comparisons
+	Dangerous comparisons:
+	- timestamp < start + CLIFF (src/TeamVestLock.sol#63)
+	- timestamp >= start + DURATION (src/TeamVestLock.sol#64)
+TeamVestLock.releasable() (src/TeamVestLock.sol#70-74) uses timestamp for comparisons
+	Dangerous comparisons:
+	- vested <= released (src/TeamVestLock.sol#72)
+TeamVestLock.release() (src/TeamVestLock.sol#79-85) uses timestamp for comparisons
+	Dangerous comparisons:
+	- amount == 0 (src/TeamVestLock.sol#81)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#block-timestamp
+INFO:Detectors:
+Detector: low-level-calls
+Low level call in ExperimentTreasury.executePairingWithdraw() (src/ExperimentTreasury.sol#187-204):
+	- (ok,None) = p.to.call{value: p.amount}() (src/ExperimentTreasury.sol#196)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#low-level-calls
+INFO:Slither:. analyzed (15 contracts with 102 detectors), 19 result(s) found
