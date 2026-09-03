@@ -6,7 +6,7 @@ This repository is the Phase 1 Foundry project: five contracts, tests, and a doc
 
 ## What this is
 
-Placeholders: token name `Groken`, symbol `GRKN`. One chain family: Base (8453) and Base Sepolia (84532). No mainnet addresses are published here because none have been created by this repository.
+Placeholders: token name `Groken`, symbol `GRKN`. One chain family: Base (8453) and Base Sepolia (84532). This repository refuses chain id 8453. No mainnet addresses are published here because none have been created by this repository. Base Sepolia (84532) TESTNET addresses and tx hashes are in `WALLETS.md`. The locker holds a mock LP (not Uniswap/Aerodrome). The 80M recipient is a test stand-in, not a live pool.
 
 The five contracts have **admin off** in the sense defined below. Do not add owners, pausers, minters, or delay-updaters.
 
@@ -30,7 +30,7 @@ The documented batch (`script/LaunchBatch.s.sol`, exercised in `test/LaunchBatch
 | `ListingReserve` | 5,000,000 | Unused remainder goes to the documented dead address. |
 | `initialHolder` / throwaway deployer | 0 | After the batch. Do not treat the deployer as a holder. |
 
-LP tokens created out of band are pulled into `ImmutableLPLock`.
+LP tokens created out of band are pulled into `ImmutableLPLock`. There is no real AMM on this testnet path. `script/testnet/MockLpToken.sol` is a clearly named mock ERC-20 (not Uniswap, not Aerodrome) so a Base Sepolia lock can still be a real `ImmutableLPLock` pull. `script/DeployMockLp.s.sol` deploys it and refuses chain id 8453.
 
 The script refuses chain id 8453 and does not broadcast unless `CONFIRM_LAUNCH_BATCH=YES`. This repository does not contain a private key and does not invent deploy addresses.
 
@@ -89,6 +89,6 @@ This repository includes a self-review checklist and a static-analysis plan in `
 ## Docs
 
 - `AUDIT.md` — conservative choices, analysis plan, self-review
-- `WALLETS.md` — address template (fill after a real deploy; no invented addresses)
+- `WALLETS.md` — Base Sepolia (84532) TESTNET addresses and tx hashes (no mainnet)
 - `docs/JOURNEY-LOG-PHASE1.md` — public Phase 1 log
 - `script/LaunchBatch.s.sol` — documented batch; do not run on mainnet
