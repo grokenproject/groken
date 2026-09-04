@@ -36,4 +36,21 @@ The locker holds a **mock LP ERC-20**, not Uniswap or Aerodrome. `AMM_RECIPIENT`
 | 5M GRKN → ListingReserve | [`0xb779017a77843f6bc3337b5a159ecbaecc2b264f66ba729dac8f6b59f0d04091`](https://sepolia.basescan.org/tx/0xb779017a77843f6bc3337b5a159ecbaecc2b264f66ba729dac8f6b59f0d04091) |
 | 80M GRKN → AMM stand-in | [`0x8f6cb5184d076db6e84513ef9e998585481dc39a4399f61c1a4f5dddb90b9947`](https://sepolia.basescan.org/tx/0x8f6cb5184d076db6e84513ef9e998585481dc39a4399f61c1a4f5dddb90b9947) |
 
+## Clocks (TESTNET)
+
+Read on-chain via `https://sepolia.base.org` (`eth_chainId` = 84532) on 2026-09-04 (block `46369317`). Per-contract clocks; they differ by a few seconds. Vest years are 365-day years. This table is TESTNET only. It does not prove an AMM path.
+
+| Contract | Getter | Unix | UTC |
+|---|---|---|---|
+| TeamVestLock | `start` | `1788427320` | 2026-09-03 09:22:00 UTC |
+| TeamVestLock | `cliffEnd` (`start + 365d`) | `1819963320` | 2027-09-03 09:22:00 UTC |
+| TeamVestLock | `vestEnd` (`start + 4*365d`) | `1914571320` | 2030-09-02 09:22:00 UTC |
+| ImmutableLPLock | `unlockTime` (`LOCK_DURATION` = 90d) | `1796203326` | 2026-12-02 09:22:06 UTC |
+| ExperimentTreasury | `start` | `1788427322` | 2026-09-03 09:22:02 UTC |
+| ExperimentTreasury | `experimentEnd` (`start + 90d`) | `1796203322` | 2026-12-02 09:22:02 UTC |
+| ListingReserve | `start` | `1788427328` | 2026-09-03 09:22:08 UTC |
+| ListingReserve | `experimentEnd` (`start + 90d`) | `1796203328` | 2026-12-02 09:22:08 UTC |
+
+`TeamVestLock.releasable()` = 0; `released` = 0; beneficiary is the team wallet, not a hot wallet. Locker `release()` after `unlockTime` is the H1(d) pairing-asset return of **mock LP** to `PAIRING_BENEFICIARY` — still not a real pool. Until each `experimentEnd`, listing `sendToDead` and treasury `sendGrknToDead` are proposer-only.
+
 Do not paste placeholder 0xeee… / 0xaaa… values. Do not invent mainnet rows.
