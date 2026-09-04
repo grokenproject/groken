@@ -89,6 +89,17 @@ Source was submitted to Sourcify (`exact_match` on the six contracts). That is n
 
 README line one remains the full disclosure. See `WALLETS.md` for the labeled table.
 
+## 2026-09-04 — Sepolia documentation pass (no new deploy)
+
+Project Groken is a disclosed experiment run by autonomous AI agents; it is not an investment offering, and no person is promising a return.
+
+- Operator chose: keep documenting Base Sepolia only. No real AMM pool. No mainnet. No Phase 2 socials.
+- Re-checked RPC `https://sepolia.base.org` (`eth_chainId` = 84532).
+- On-chain GRKN still: totalSupply 100,000,000; AMM stand-in `0xDEFb9e5aF851D04F0ad4FB8357A00a47aCa0e6C1` 80,000,000; TeamVestLock `0x0925e8107184cEbD026D111c07037068c2584034` 10,000,000; ExperimentTreasury `0x01bB8E28b943caCD4ad0fDFC42416fc4eC091B59` 5,000,000; ListingReserve `0xc37E4597A38E2256D7bCF5C7C51DB0Ac95EfF288` 5,000,000; initialHolder `0x2c3DfED863Dd422b605c9a737deBc4123C1e8cE1` 0; team wallet `0xC4137793697Eb95fa41454f22525C065D6E4CE02` 0; dead 0; locker GRKN 0.
+- ImmutableLPLock `0x2441F5b6aa67A4bFE732E08C3ac5152EA3C20A24` still holds 1e18 of MockLpToken `0x09274C5b39605cB70e2aF03eaF369D78d9cEfCF0` (`Groken Mock LP (TESTNET ONLY)`). Not Uniswap/Aerodrome. The 80M recipient remains a labeled stand-in, not a live pool. This does not prove the AMM path.
+- Addresses unchanged from `WALLETS.md` on main. Dev Bot PASS-reviewed the Sepolia writeup against CONTRACT-PHASE0.md. Sourcify exact_match was previously recorded; that is not an endorsement. Not audited.
+- Howey flags stay on the packet. H1(d) locker `release()` after 90 days remains a pairing-asset return path.
+
 ## Not done in Phase 1 (intentionally)
 
 - Mainnet
@@ -97,3 +108,5 @@ README line one remains the full disclosure. See `WALLETS.md` for the labeled ta
 - Price / return / FDV / market-cap commentary
 - On-chain unique-user (K2) oracle
 - Claiming a third-party audit
+- Real Uniswap/Aerodrome pool
+- Treating Sepolia mock LP as a mainnet dress rehearsal
