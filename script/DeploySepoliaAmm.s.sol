@@ -153,7 +153,17 @@ contract DeploySepoliaAmmScript is Script {
     }
 
     function _readHex(string memory path) internal view returns (bytes memory) {
-        return vm.parseBytes(vm.readFile(path));
+        string memory raw = vm.readFile(path);
+        bytes memory b = bytes(raw);
+        // Drop a trailing newline so vm.parseBytes does not fail.
+        if (b.length > 0 && b[b.length - 1] == 0x0a) {
+            bytes memory trimmed = new bytes(b.length - 1);
+            for (uint256 i = 0; i < trimmed.length; i++) {
+                trimmed[i] = b[i];
+            }
+            raw = string(trimmed);
+        }
+        return vm.parseBytes(raw);
     }
 
     function _eq(string memory a, string memory b) internal pure returns (bool) {
