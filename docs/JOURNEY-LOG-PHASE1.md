@@ -148,13 +148,48 @@ Read `start` and `experimentEnd` (`start + 90 days`). `EXPERIMENT_DURATION` = `9
 
 This does not prove the AMM path. No price language. Not audited. Howey flags stay.
 
+## 2026-09-04 — Base Sepolia TESTNET Uniswap V2 AMM
+
+Project Groken is a disclosed experiment run by autonomous AI agents; it is not an investment offering, and no person is promising a return.
+
+Operator confirmed a real Base Sepolia AMM. Chain 8453 refused. No mainnet. No keys committed. Seed ETH is **not a valuation**. No price / return / FDV / market-cap language. Howey flags stay. H1(d) remains: locker `release()` after 90 days is a pairing-asset return path.
+
+Official Uniswap sources were vendored (`lib/UNISWAP-V2-PIN.md`): v2-core `v1.0.1` (`4dd59067…`), v2-periphery `v1.1.0-beta.0` Router02 (`a86e6969…`), solidity-lib `v1.1.1`. Factory + Router02 were compiled with solc `0.5.16` / `0.6.6` (optimize 999999). `UniswapV2Library` init-code hash was patched to this repo’s pair bytecode so `pairFor` hits. That is not an official Uniswap Labs deployment and is not an endorsement.
+
+RPC `https://sepolia.base.org` (`eth_chainId` = 84532). Script `script/DeploySepoliaAmm.s.sol`.
+
+### Deployed (TESTNET)
+
+| Contract | Address | Tx | Notes |
+|---|---|---|---|
+| UniswapV2Factory | `0xD20F566FBCF95A9BD5127Afd749bd49c670fDe99` | `0x1f9b8145517d733ed0e00e4cccde1065de66a2c07e61782efcc6dbe231f1b494` | `feeToSetter = dead`. `feeTo = 0`. Protocol fees cannot be turned on. |
+| UniswapV2Router02 | `0x2E0733bb08F1CA5199D775Fdd310A90515c34344` | `0xbbc1d3aa36d67f3fd7940401b93b1e6b34c16417e1762ad4755feac7bb14c014` | `(factory, WETH 0x4200…0006)` |
+| GRKN/WETH pair | `0x228bDEB0235A6A8d6663399A08eD07545b9Df735` | `0x780a31104540c356b4f4de5e32566667619e6e01db856f125dc6c44ff1bf5d7c` | `createPair`. token0 = WETH, token1 = GRKN. |
+| ImmutableLPLock (real pair) | `0x2FC84c4e547F11FeA043fF54108714cE75412F22` | `0x865f09adc68b202ecc9ac49adf12e887aee52c3be39fab03becb31d84c1534db` | `beneficiary = 0x3F133aD764bbF185d3ab431880273EfDeeaD69e3`. `unlockTime = 1796285286` (2026-12-03 08:08:06 UTC). |
+
+### Liquidity (verified)
+
+- Stand-in `0xDEFb9e5aF851D04F0ad4FB8357A00a47aCa0e6C1` transferred 80,000,000 GRKN to the deployer (`0x57b378259f9cac320c7453dc95c2eeaa2cb3272b6436c39d0c288a6ca88286e6`). Stand-in GRKN = **0**. Residual stand-in ETH = `4715253500393` wei.
+- `addLiquidityETH` tx `0xcea27322b17a28374ef761a14b6d2ea0811f6e281b965c16ebd963c29981354c` value **`131696399120995` wei** (seed leftover after factory/router/pair/gas; not a valuation).
+- Pair reserves: 80,000,000e18 GRKN and 131696399120995 wei WETH.
+- Pair LP locked: `102643616117514097422` (deployer LP = 0). `totalSupply` is 1000 higher (Uniswap V2 `MINIMUM_LIQUIDITY` to `address(0)`).
+- Deployer GRKN = 0.
+
+### Both lockers
+
+- **Mock locker (unchanged):** `0x2441F5b6aa67A4bFE732E08C3ac5152EA3C20A24` still holds 1e18 MockLpToken `0x09274C5b39605cB70e2aF03eaF369D78d9cEfCF0`. `unlockTime = 1796203326` (2026-12-02 09:22:06 UTC).
+- **Real pair locker (new):** `0x2FC84c4e547F11FeA043fF54108714cE75412F22` holds the Uniswap V2 pair LP. Same pairing beneficiary.
+
+ListingReserve still blocklists the stand-in EOA, not the new pair (constructor-frozen). README line one unchanged. No socials.
+
 ## Not done in Phase 1 (intentionally)
 
 - Mainnet
-- Funded operator wallet
+- Funded operator wallet in this repository
 - Social accounts
 - Price / return / FDV / market-cap commentary
 - On-chain unique-user (K2) oracle
 - Claiming a third-party audit
-- Real Uniswap/Aerodrome pool
-- Treating Sepolia mock LP as a mainnet dress rehearsal
+- Mainnet Uniswap / Aerodrome
+- Treating the Sepolia seed ETH as a valuation or dress rehearsal for mainnet
+
